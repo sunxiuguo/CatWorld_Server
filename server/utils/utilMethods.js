@@ -1,8 +1,6 @@
 const superagent = require('superagent');
 const options = require('../../config');
 const fs = require('fs');
-const cheerio = require('cheerio');
-const cheerioTableparser = require('cheerio-tableparser');
 const moment = require('./datetime');
 const log4js = require('koa-log4')
 const logger = log4js.getLogger('util/utilMethods.js')
@@ -111,75 +109,14 @@ const util = {
      * @return json数据
      */
     async mapHtmlTableToJSON( html ){
-        logger.info(`Enter mapHtmlTableToJSON`)
-        if(!html)
-            return [];
-        // logger.debug(`cheerio.load(html)`);
-        const $ = cheerio.load(html);
-        // 周统计html中的列表元素是table_title table_body
-        // 其他html中的列表元素是dtable_title dtable_body
-        // const titleSelect = $('.dtable_title').length>0 ? '.dtable_title' : '.table_title';
-        // const bodySelect = $('.dtable_body').length>0 ? '.dtable_body' : '.table_body';
-        const titleSelect = '.dtable_title';
-        const bodySelect = '.dtable_body';
-        let resultJson = {};
-        // $('.dtable_title')  $("div[class$='table_title']")  
-        // 使用模糊匹配 耗时太长
-        // logger.debug(`titleSelect=${titleSelect}  bodySelect=${bodySelect}`);
-        $(titleSelect).each(function(indexTitle){
-            let title = $(this).text();
-            // if(titleSelect === '.table_title')
-                // logger.debug(`title = ${title}`)
-            // $('.dtable_body')  $("div[class$='table_body']")
-            $(bodySelect).each(function(indexBody){
-                // logger.debug(`enter 2layer bodySelect`)
-                // htmlTable转换为json
-                let tableHtml = cheerio.load($(this).html());
-                cheerioTableparser(tableHtml);
-                let data = tableHtml("table").parsetable(true,true,false);
-                // 去掉a标签
-                data = data.map(function(arr){
-                    return arr.map(function(item){
-                        if(item.indexOf('<a') > -1)
-                            item = cheerio.load(item).text();
-                        return item;
-                    })
-                })
-                // 将title和Body匹配
-                if(indexTitle === indexBody)
-                    resultJson[title] = data;
-            })
-        });
-        return resultJson;   
+          
     },
     /**
      * 将原有的查询结果去掉数据，只留下列名
      * @param {*} listData 
      */
     async renderColumns( listData ){
-        logger.info(`Enter renderColumns`)
-        let listDataTemp = JSON.parse(JSON.stringify(listData));
-        let tableCols = [];
-        let colData = listDataTemp.map(function(interfaceItem){
-            for(let key in interfaceItem.html){
-                interfaceItem.html[key] = util.renderTreeData(
-                    interfaceItem.html[key].map(function(htmlItem){
-                        let cols = htmlItem.filter((value,index) => index<2);
-                        let colObj = {
-                            head:key,
-                            first:cols[0],
-                            second:cols[1],
-                            text:"",
-                            checked:false,
-                        };
-                        tableCols.push(colObj);
-                        return cols;
-                    })
-                );
-            }
-            return interfaceItem;
-        });
-        return {treeInfo:colData,colsInfo:tableCols};
+        
     },
     /**
      * 将列的二维数组转换为树结构
